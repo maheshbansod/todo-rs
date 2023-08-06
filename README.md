@@ -6,5 +6,5 @@ A simple CLI app for todo lists
 ## Install
 
 ```
-cargo install --git <url>
+cargo install --git https://github.com/maheshbansod/todo-rs.git
 ```
