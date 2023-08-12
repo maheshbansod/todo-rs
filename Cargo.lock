@@ -419,6 +419,7 @@ dependencies = [
  "getset",
  "serde",
  "serde_json",
+ "thiserror",
 ]
 
 [[package]]

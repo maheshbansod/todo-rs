@@ -7,6 +7,7 @@ use std::{
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use config::Config;
+use todo::TodoList;
 
 mod config;
 
@@ -69,7 +70,8 @@ fn main() -> Result<()> {
             let file = fs::read_to_string(config.list_path(&name))
                 .expect("Can't read the list. Are you sure it exists?");
 
-            println!("{file}");
+            let list: TodoList = file.trim().parse()?;
+            println!("{list}");
         }
     }
     Ok(())
