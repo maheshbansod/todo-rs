@@ -37,11 +37,20 @@ impl Display for TodoItem {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "- [{}] {}{}",
-            if self.state == TodoItemState::Done { 'x' } else { ' ' },
+            " {} {}{}",
+            self.state,
             self.name,
             if let Some(desc) = &self.description { format!("\n{desc}") } else { "".to_string() }
         )
+    }
+}
+
+impl Display for TodoItemState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TodoItemState::Done => write!(f, "✅"),
+            TodoItemState::Initial => write!(f, "⬜")
+        }
     }
 }
 
