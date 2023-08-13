@@ -77,6 +77,11 @@ impl TodoList {
             .get_mut(item_number - 1)
             .ok_or_else(|| TodoError::InvalidItemNumber(item_number))
     }
+    pub fn get_item(&self, item_number: usize) -> Result<&TodoItem, TodoError> {
+        self.list
+            .get(item_number - 1)
+            .ok_or_else(|| TodoError::InvalidItemNumber(item_number))
+    }
 
     pub fn mark_item_done(&mut self, item_number: usize) -> Result<&TodoItem, TodoError> {
         let item = self.get_item_mut(item_number)?;
@@ -93,10 +98,15 @@ impl TodoList {
         self.list.push(item);
     }
 
-    pub fn delete_item(&mut self, item_number: usize) -> Result<TodoItem, TodoError> {
-        let item = self.get_item_mut(item_number)?.clone();
-        self.list.remove(item_number - 1);
-        Ok(item)
+    pub fn delete_items(&mut self, item_numbers: Vec<usize>) -> Result<Vec<TodoItem>, TodoError> {
+        let items_to_remove = item_numbers
+            .iter()
+            .map(|&i| self.get_item(i).cloned())
+            .collect::<Result<Vec<_>, _>>()?;
+        // this implementation will remove items with the same name - is a fix to this needed?
+        self.list
+            .retain(|i| items_to_remove.iter().find(|r| r.name == i.name).is_none());
+        Ok(items_to_remove)
     }
 
     pub fn write(&self, path: &Path) -> Result<(), TodoError> {

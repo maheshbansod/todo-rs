@@ -98,10 +98,7 @@ fn main() -> Result<()> {
         }
         Commands::Delete { item_numbers } => {
             let mut list = TodoList::from_file(&list_path)?;
-            let removed_items = item_numbers
-                .iter()
-                .map(|&item_number| list.delete_item(item_number))
-                .collect::<Result<Vec<_>, _>>()?;
+            let removed_items = list.delete_items(item_numbers)?;
 
             list.write(&list_path)
                 .with_context(|| "Couldn't write to the list")?;
