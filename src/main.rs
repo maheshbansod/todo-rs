@@ -28,12 +28,12 @@ enum Commands {
         title: String,
     },
     List,
-    /// mark an item done
+    /// mark items done
     Done {
-        #[arg(short, long)]
-        item_number: usize,
+        #[arg(short, long, num_args(1..))]
+        item_numbers: Vec<usize>,
     },
-    /// delete an item
+    /// delete items
     Delete {
         #[arg(short, long, num_args(1..))]
         item_numbers: Vec<usize>,
@@ -83,29 +83,39 @@ fn main() -> Result<()> {
             let list = TodoList::from_file(&list_path)?;
             println!("{}", list.display_with_numbers());
         }
-        Commands::Done { item_number } => {
-            let mut list = TodoList::from_file(&list_path)?;
-            let item = list.mark_item_done(item_number)?.clone();
+        Commands::Done { item_numbers } => {
+            let done_items = {
+                let mut list = TodoList::from_file(&list_path)?;
+                let done_items = item_numbers
+                    .iter()
+                    .map(|item_number| list.mark_item_done(*item_number).map(|i| i.clone()))
+                    .collect::<Result<Vec<_>, _>>()?;
+                list.write(&config.list_path(&list_name))
+                    .with_context(|| "Something went wrong. Couldn't write to the list.")?;
+                done_items
+            };
 
-            list.write(&config.list_path(&list_name))
-                .with_context(|| "Something went wrong. Couldn't write to the list.")?;
-
-            println!("Marked item done.\n{item}");
+            println!(
+                "Marked item(s) done.\n{}",
+                done_items
+                    .iter()
+                    .map(|i| i.to_string())
+                    .collect::<Vec<String>>()
+                    .join("\n")
+            );
         }
         Commands::Delete { item_numbers } => {
             let mut list = TodoList::from_file(&list_path)?;
             let removed_items = item_numbers
                 .iter()
-                .map(|&item_number| {
-                    list.delete_item(item_number)
-                })
+                .map(|&item_number| list.delete_item(item_number))
                 .collect::<Result<Vec<_>, _>>()?;
 
             list.write(&list_path)
                 .with_context(|| "Couldn't write to the list")?;
 
             println!(
-                "Deleted todo items\n{}",
+                "Deleted todo item(s)\n{}",
                 removed_items
                     .iter()
                     .map(|i| i.to_string())
