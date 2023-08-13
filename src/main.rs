@@ -31,7 +31,10 @@ enum Commands {
     },
     /// List items
     #[command(alias="ls")]
-    List,
+    List {
+        #[arg(short, long)]
+        all: bool
+    },
     /// Mark items done
     #[command(alias="d")]
     Done {
@@ -76,7 +79,7 @@ fn main() -> Result<()> {
     };
 
     // list is the default command
-    let command = cli.command.unwrap_or(Commands::List);
+    let command = cli.command.unwrap_or(Commands::List { all: false });
 
     // perform operation on this list
     let list_name = cli.list.unwrap_or(config.general_list().clone());
@@ -93,9 +96,11 @@ fn main() -> Result<()> {
             list.write(&list_path)
                 .with_context(|| "Couldn't write the list")?;
         }
-        Commands::List => {
+        Commands::List { all } => {
             let list = TodoList::from_file(&list_path)?;
-            println!("{}", list.display_with_numbers());
+            println!("{}", list.display_with_numbers(|&(_, i)| {
+                all || !i.is_done()
+            }));
         }
         Commands::Done { item_numbers } => {
             let done_items = {

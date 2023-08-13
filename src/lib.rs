@@ -54,10 +54,13 @@ impl TodoList {
         Ok(list)
     }
 
-    pub fn display_with_numbers(&self) -> String {
+    pub fn display_with_numbers<P>(&self, predicate: P) -> String
+    where P: FnMut(&(usize, &TodoItem)) -> bool
+    {
         self.list
             .iter()
             .enumerate()
+            .filter(predicate)
             .map(|(i, item)| format!("{: >3} {item}", i + 1)) // padding will be good till 3
             // digits - todo: check how we can remove this limit
             .collect::<Vec<String>>()
@@ -143,6 +146,10 @@ pub struct TodoItem {
 impl TodoItem {
     pub fn mark_done(&mut self) {
         self.state = TodoItemState::Done;
+    }
+    
+    pub fn is_done(&self) -> bool {
+        self.state == TodoItemState::Done
     }
 }
 
