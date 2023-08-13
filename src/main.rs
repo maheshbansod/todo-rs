@@ -71,7 +71,7 @@ fn main() -> Result<()> {
                 .expect("Can't read the list. Are you sure it exists?");
 
             let list: TodoList = file.trim().parse()?;
-            println!("{list}");
+            println!("{}", list.display_with_numbers());
         }
     }
     Ok(())

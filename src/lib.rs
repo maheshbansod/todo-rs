@@ -6,6 +6,21 @@ pub struct TodoList {
     list: Vec<TodoItem>,
 }
 
+impl TodoList {
+    pub fn display_with_numbers(&self) -> String {
+        format!(
+            "{}",
+            self.list
+                .iter()
+                .enumerate()
+                .map(|(i, item)| format!("{: >3} {item}", i+1)) // padding will be good till 3
+                // digits - todo: check how we can remove this limit
+                .collect::<Vec<String>>()
+                .join("\n")
+        )
+    }
+}
+
 #[derive(PartialEq, Clone)]
 pub enum TodoItemState {
     Done,
