@@ -25,24 +25,29 @@ struct Cli {
 #[derive(Subcommand, Debug)]
 enum Commands {
     /// Add an item
+    #[command(alias="a")]
     Add {
         title: String,
     },
     /// List items
+    #[command(alias="ls")]
     List,
     /// Mark items done
+    #[command(alias="d")]
     Done {
         /// Item numbers to mark
         #[arg(short, long, num_args(1..))]
         item_numbers: Vec<usize>,
     },
     /// Delete items
+    #[command(alias="rm")]
     Delete {
         /// Item numbers to delete
         #[arg(short, long, num_args(1..))]
         item_numbers: Vec<usize>,
     },
     /// move items to another list
+    #[command(alias="mv")]
     Move {
         /// Item numbers to move
         #[arg(short, long, num_args(1..))]
