@@ -37,6 +37,13 @@ enum Commands {
         #[arg(short, long, num_args(1..))]
         item_numbers: Vec<usize>,
     },
+    /// move items to another list
+    Move {
+        #[arg(short, long, num_args(1..))]
+        item_numbers: Vec<usize>,
+        #[arg(short, long)]
+        to_list: String,
+    },
 }
 
 fn main() -> Result<()> {
@@ -111,6 +118,21 @@ fn main() -> Result<()> {
                     .collect::<Vec<_>>()
                     .join("\n")
             );
+        }
+        Commands::Move {
+            item_numbers,
+            to_list,
+        } => {
+            let mut from_list = TodoList::from_file(&list_path)?;
+            let to_list_path = config.list_path(&to_list);
+            let mut to_list = TodoList::from_file(&to_list_path)?;
+            let removed_items = from_list.delete_items(item_numbers)?;
+            to_list.add_items(removed_items);
+
+            to_list.write(&to_list_path).with_context(|| {
+                "Couldn't write to destination list. Items not added or removed"
+            })?;
+            from_list.write(&list_path).with_context(|| "Couldn't write to source list. Items not removed from source list but written to destination list.")?;
         }
     }
     Ok(())

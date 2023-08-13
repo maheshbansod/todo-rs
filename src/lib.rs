@@ -109,6 +109,10 @@ impl TodoList {
         Ok(items_to_remove)
     }
 
+    pub fn add_items(&mut self, mut items: Vec<TodoItem>) {
+        self.list.append(&mut items);
+    }
+
     pub fn write(&self, path: &Path) -> Result<(), TodoError> {
         Ok(fs::write(path, self.as_markdown())?)
     }
