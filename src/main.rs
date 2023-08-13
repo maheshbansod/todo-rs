@@ -8,6 +8,7 @@ use todo::{TodoError, TodoList};
 mod config;
 
 #[derive(Parser, Debug)]
+#[command(author,version, about, long_about = None)]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -23,24 +24,30 @@ struct Cli {
 
 #[derive(Subcommand, Debug)]
 enum Commands {
+    /// Add an item
     Add {
         title: String,
     },
+    /// List items
     List,
-    /// mark items done
+    /// Mark items done
     Done {
+        /// Item numbers to mark
         #[arg(short, long, num_args(1..))]
         item_numbers: Vec<usize>,
     },
-    /// delete items
+    /// Delete items
     Delete {
+        /// Item numbers to delete
         #[arg(short, long, num_args(1..))]
         item_numbers: Vec<usize>,
     },
     /// move items to another list
     Move {
+        /// Item numbers to move
         #[arg(short, long, num_args(1..))]
         item_numbers: Vec<usize>,
+        /// Destination list
         #[arg(short, long)]
         to_list: String,
     },
