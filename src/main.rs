@@ -75,7 +75,7 @@ fn main() -> Result<()> {
                     )
                 })?;
 
-            writeln!(file, "- [ ] {}", title).with_context(|| {
+            writeln!(file, "\n- [ ] {}", title).with_context(|| {
                 format!("Couldn't write to the file '{}'", &list_path.display())
             })?;
         }
