@@ -13,6 +13,13 @@ pub struct TodoList {
 }
 
 impl TodoList {
+    pub fn new(name: &str) -> Self {
+        Self {
+            name: name.to_string(),
+            list: vec![],
+        }
+    }
+
     pub fn from_file(path: &Path) -> Result<Self, TodoError> {
         let name = path.file_name().unwrap();
         let file_contents = fs::read_to_string(path)?;
@@ -75,6 +82,15 @@ impl TodoList {
         let item = self.get_item_mut(item_number)?;
         item.mark_done();
         Ok(item)
+    }
+
+    pub fn add_item(&mut self, item_title: &str) {
+        let item = TodoItem {
+            name: item_title.to_string(),
+            description: None,
+            state: TodoItemState::Initial,
+        };
+        self.list.push(item);
     }
 
     pub fn delete_item(&mut self, item_number: usize) -> Result<TodoItem, TodoError> {
@@ -225,5 +241,5 @@ pub enum TodoError {
     #[error("Invalid item number. The item number {0} doesn't exist in the list")]
     InvalidItemNumber(usize),
     #[error("IO Error. {0}")]
-    FileWriteError(#[from] io::Error),
+    FileIOError(#[from] io::Error),
 }

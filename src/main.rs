@@ -1,10 +1,9 @@
-use std::io::Write;
-use std::{fs::OpenOptions, path::PathBuf};
+use std::path::PathBuf;
 
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use config::Config;
-use todo::TodoList;
+use todo::{TodoError, TodoList};
 
 mod config;
 
@@ -63,21 +62,14 @@ fn main() -> Result<()> {
 
     match cli.command {
         Commands::Add { title } => {
-            let mut file = OpenOptions::new()
-                .create(true)
-                .write(true)
-                .append(true)
-                .open(&list_path)
-                .with_context(|| {
-                    format!(
-                        "Couldn't open file '{}' to write to the list",
-                        &list_path.display()
-                    )
-                })?;
-
-            writeln!(file, "\n- [ ] {}", title).with_context(|| {
-                format!("Couldn't write to the file '{}'", &list_path.display())
-            })?;
+            let mut list = match TodoList::from_file(&list_path) {
+                Ok(list) => list,
+                Err(TodoError::FileIOError(_)) => TodoList::new(&list_name),
+                Err(e) => return Err(e.into()),
+            };
+            list.add_item(&title);
+            list.write(&list_path)
+                .with_context(|| "Couldn't write the list")?;
         }
         Commands::List => {
             let list = TodoList::from_file(&list_path)?;
