@@ -19,7 +19,6 @@ struct Cli {
     /// Perform any action using this
     list: Option<String>, // TODO: implement some way to store list path in config so lists can be
     // refered by name here
-
     /// Optionally specify path to a configuration file.
     #[arg(short, long)]
     config: Option<PathBuf>,
@@ -27,13 +26,17 @@ struct Cli {
 
 #[derive(Subcommand, Debug)]
 enum Commands {
-    Add { title: String },
-    List { name: Option<String> },
+    Add {
+        title: String,
+    },
+    List {
+        name: Option<String>,
+    },
     /// mark an item done
     Done {
-        #[arg(short,long)]
-        item_number: usize
-    }
+        #[arg(short, long)]
+        item_number: usize,
+    },
 }
 
 fn main() -> Result<()> {
@@ -81,7 +84,7 @@ fn main() -> Result<()> {
 
             let list: TodoList = file.trim().parse()?;
             println!("{}", list.display_with_numbers());
-        },
+        }
         Commands::Done { item_number } => {
             let name = config.general_list(); // list name
 
@@ -91,7 +94,8 @@ fn main() -> Result<()> {
             let mut list: TodoList = file.trim().parse()?;
             let item = list.mark_item_done(item_number)?.clone();
 
-            list.write(&config.list_path(name)).expect("Something went wrong. Couldn't write to the list");
+            list.write(&config.list_path(name))
+                .expect("Something went wrong. Couldn't write to the list");
 
             println!("Marked item done.\n{item}");
         }

@@ -1,4 +1,9 @@
-use std::{fmt::{Display, Debug}, str::FromStr, path::Path, fs, io};
+use std::{
+    fmt::{Debug, Display},
+    fs, io,
+    path::Path,
+    str::FromStr,
+};
 
 use thiserror::Error;
 
@@ -8,24 +13,27 @@ pub struct TodoList {
 
 impl TodoList {
     pub fn display_with_numbers(&self) -> String {
-        format!(
-            "{}",
-            self.list
-                .iter()
-                .enumerate()
-                .map(|(i, item)| format!("{: >3} {item}", i+1)) // padding will be good till 3
-                // digits - todo: check how we can remove this limit
-                .collect::<Vec<String>>()
-                .join("\n")
-        )
+        self.list
+            .iter()
+            .enumerate()
+            .map(|(i, item)| format!("{: >3} {item}", i + 1)) // padding will be good till 3
+            // digits - todo: check how we can remove this limit
+            .collect::<Vec<String>>()
+            .join("\n")
     }
 
     pub fn as_markdown(&self) -> String {
-        self.list.iter().map(|i| format!("- [{}] {}", i.state.as_markdown(), i.name)).collect::<Vec<String>>().join("\n")
+        self.list
+            .iter()
+            .map(|i| format!("- [{}] {}", i.state.as_markdown(), i.name))
+            .collect::<Vec<String>>()
+            .join("\n")
     }
 
     pub fn get_item_mut(&mut self, item_number: usize) -> Result<&mut TodoItem, TodoError> {
-        self.list.get_mut(item_number - 1).ok_or_else(|| TodoError::InvalidItemNumber)
+        self.list
+            .get_mut(item_number - 1)
+            .ok_or_else(|| TodoError::InvalidItemNumber)
     }
 
     pub fn mark_item_done(&mut self, item_number: usize) -> Result<&TodoItem, TodoError> {
@@ -49,7 +57,7 @@ impl TodoItemState {
     pub fn as_markdown(&self) -> String {
         match self {
             TodoItemState::Done => "x".to_string(),
-            TodoItemState::Initial => " ".to_string()
+            TodoItemState::Initial => " ".to_string(),
         }
     }
 }
@@ -88,7 +96,11 @@ impl Display for TodoItem {
             " {} {}{}",
             self.state,
             self.name,
-            if let Some(desc) = &self.description { format!("\n{desc}") } else { "".to_string() }
+            if let Some(desc) = &self.description {
+                format!("\n{desc}")
+            } else {
+                "".to_string()
+            }
         )
     }
 }
@@ -97,7 +109,7 @@ impl Display for TodoItemState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             TodoItemState::Done => write!(f, "✅"),
-            TodoItemState::Initial => write!(f, "⬜")
+            TodoItemState::Initial => write!(f, "⬜"),
         }
     }
 }
@@ -200,5 +212,5 @@ pub enum TodoError {
     #[error("Invalid item number. This item doesn't exist in the list")]
     InvalidItemNumber,
     #[error("Error writing. {0}")]
-    FileWriteError (#[from] io::Error)
+    FileWriteError(#[from] io::Error),
 }
