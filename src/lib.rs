@@ -1,6 +1,7 @@
 use std::{
     fmt::{Debug, Display},
-    fs, io,
+    fs::{self},
+    io,
     path::Path,
     str::FromStr,
 };
@@ -8,10 +9,45 @@ use std::{
 use thiserror::Error;
 
 pub struct TodoList {
+    pub name: String,
     list: Vec<TodoItem>,
 }
 
 impl TodoList {
+    pub fn from_file(path: &Path) -> Result<Self, TodoError> {
+        let name = path.file_name().unwrap();
+        let file_contents = fs::read_to_string(path)?;
+        let list = TodoList::list_from_str(&file_contents)?;
+        Ok(Self {
+            name: name.to_string_lossy().to_string(),
+            list,
+        })
+    }
+
+    fn list_from_str(s: &str) -> Result<Vec<TodoItem>, TodoError> {
+        // todo: maybe try nom or smn
+        let lines = s.lines();
+        let mut list: Vec<TodoItem> = vec![];
+        for line in lines {
+            let item: Result<TodoItem, _> = line.parse();
+            if let Err(err) = item {
+                // concat to last's desciption if invalid todo item
+                if let Some(last) = list.last_mut() {
+                    if let Some(desc) = &last.description {
+                        last.description = Some(format!("{}\n{}", desc, line));
+                    } else {
+                        last.description = Some(line.to_string());
+                    }
+                } else {
+                    return Err(err);
+                }
+            } else {
+                list.push(item.unwrap());
+            }
+        }
+        Ok(list)
+    }
+
     pub fn display_with_numbers(&self) -> String {
         self.list
             .iter()
@@ -114,34 +150,6 @@ impl Display for TodoItemState {
     }
 }
 
-impl FromStr for TodoList {
-    type Err = TodoError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        // todo: maybe try nom or smn
-        let lines = s.lines();
-        let mut list: Vec<TodoItem> = vec![];
-        for line in lines {
-            let item: Result<TodoItem, _> = line.parse();
-            if let Err(err) = item {
-                // concat to last's desciption if invalid todo item
-                if let Some(last) = list.last_mut() {
-                    if let Some(desc) = &last.description {
-                        last.description = Some(format!("{}\n{}", desc, line));
-                    } else {
-                        last.description = Some(line.to_string());
-                    }
-                } else {
-                    return Err(err);
-                }
-            } else {
-                list.push(item.unwrap());
-            }
-        }
-        Ok(Self { list })
-    }
-}
-
 impl FromStr for TodoItem {
     type Err = TodoError;
 
@@ -211,6 +219,6 @@ pub enum TodoError {
     ParseError(String),
     #[error("Invalid item number. This item doesn't exist in the list")]
     InvalidItemNumber,
-    #[error("Error writing. {0}")]
+    #[error("IO Error. {0}")]
     FileWriteError(#[from] io::Error),
 }

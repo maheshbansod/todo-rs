@@ -92,12 +92,6 @@ impl Config {
         Ok(data.trim().to_owned())
     }
 
-    pub fn general_list_path(&self) -> PathBuf {
-        let mut list_path = self.main_dir.clone();
-        list_path.push(format!("{}.md", self.general_list));
-        list_path
-    }
-
     pub fn list_path(&self, name: &str) -> PathBuf {
         let mut list_path = self.main_dir.clone();
         list_path.push(format!("{}.md", name));

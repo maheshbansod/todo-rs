@@ -1,8 +1,5 @@
 use std::io::Write;
-use std::{
-    fs::{self, OpenOptions},
-    path::PathBuf,
-};
+use std::{fs::OpenOptions, path::PathBuf};
 
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
@@ -16,7 +13,8 @@ struct Cli {
     #[command(subcommand)]
     command: Commands,
 
-    /// Perform any action using this
+    /// Perform actions on this list - general list is used if unspecified
+    #[arg(short, long)]
     list: Option<String>, // TODO: implement some way to store list path in config so lists can be
     // refered by name here
     /// Optionally specify path to a configuration file.
@@ -29,9 +27,7 @@ enum Commands {
     Add {
         title: String,
     },
-    List {
-        name: Option<String>,
-    },
+    List,
     /// mark an item done
     Done {
         #[arg(short, long)]
@@ -56,10 +52,12 @@ fn main() -> Result<()> {
         Config::read_interactive()?
     };
 
+    // perform operation on this list
+    let list_name = cli.list.unwrap_or(config.general_list().clone());
+    let list_path = config.list_path(&list_name);
+
     match cli.command {
         Commands::Add { title } => {
-            let list_path = config.general_list_path();
-
             let mut file = OpenOptions::new()
                 .create(true)
                 .write(true)
@@ -76,26 +74,16 @@ fn main() -> Result<()> {
                 format!("Couldn't write to the file '{}'", &list_path.display())
             })?;
         }
-        Commands::List { name } => {
-            let name = name.unwrap_or(config.general_list().clone());
-
-            let file = fs::read_to_string(config.list_path(&name))
-                .expect("Can't read the list. Are you sure it exists?");
-
-            let list: TodoList = file.trim().parse()?;
+        Commands::List => {
+            let list = TodoList::from_file(&list_path)?;
             println!("{}", list.display_with_numbers());
         }
         Commands::Done { item_number } => {
-            let name = config.general_list(); // list name
-
-            let file = fs::read_to_string(config.list_path(name))
-                .expect("Can't read the list. Are you sure it exists?");
-
-            let mut list: TodoList = file.trim().parse()?;
+            let mut list = TodoList::from_file(&list_path)?;
             let item = list.mark_item_done(item_number)?.clone();
 
-            list.write(&config.list_path(name))
-                .expect("Something went wrong. Couldn't write to the list");
+            list.write(&config.list_path(&list_name))
+                .with_context(|| "Something went wrong. Couldn't write to the list.")?;
 
             println!("Marked item done.\n{item}");
         }
