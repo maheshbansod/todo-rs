@@ -68,7 +68,7 @@ impl TodoList {
     pub fn get_item_mut(&mut self, item_number: usize) -> Result<&mut TodoItem, TodoError> {
         self.list
             .get_mut(item_number - 1)
-            .ok_or_else(|| TodoError::InvalidItemNumber)
+            .ok_or_else(|| TodoError::InvalidItemNumber(item_number))
     }
 
     pub fn mark_item_done(&mut self, item_number: usize) -> Result<&TodoItem, TodoError> {
@@ -222,8 +222,8 @@ impl FromStr for TodoItemState {
 pub enum TodoError {
     #[error("Parsing error. {0}")]
     ParseError(String),
-    #[error("Invalid item number. This item doesn't exist in the list")]
-    InvalidItemNumber,
+    #[error("Invalid item number. The item number {0} doesn't exist in the list")]
+    InvalidItemNumber(usize),
     #[error("IO Error. {0}")]
     FileWriteError(#[from] io::Error),
 }

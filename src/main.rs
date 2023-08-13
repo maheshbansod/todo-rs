@@ -35,8 +35,8 @@ enum Commands {
     },
     /// delete an item
     Delete {
-        #[arg(short, long)]
-        item_number: usize,
+        #[arg(short, long, num_args(1..))]
+        item_numbers: Vec<usize>,
     },
 }
 
@@ -92,14 +92,26 @@ fn main() -> Result<()> {
 
             println!("Marked item done.\n{item}");
         }
-        Commands::Delete { item_number } => {
+        Commands::Delete { item_numbers } => {
             let mut list = TodoList::from_file(&list_path)?;
-            let item = list.delete_item(item_number)?;
+            let removed_items = item_numbers
+                .iter()
+                .map(|&item_number| {
+                    list.delete_item(item_number)
+                })
+                .collect::<Result<Vec<_>, _>>()?;
 
             list.write(&list_path)
                 .with_context(|| "Couldn't write to the list")?;
 
-            println!("Deleted todo item\n{item}");
+            println!(
+                "Deleted todo items\n{}",
+                removed_items
+                    .iter()
+                    .map(|i| i.to_string())
+                    .collect::<Vec<_>>()
+                    .join("\n")
+            );
         }
     }
     Ok(())
