@@ -11,7 +11,7 @@ mod config;
 #[command(author,version, about, long_about = None)]
 struct Cli {
     #[command(subcommand)]
-    command: Commands,
+    command: Option<Commands>,
 
     /// Perform actions on this list - general list is used if unspecified
     #[arg(short, long)]
@@ -75,11 +75,14 @@ fn main() -> Result<()> {
         Config::read_interactive()?
     };
 
+    // list is the default command
+    let command = cli.command.unwrap_or(Commands::List);
+
     // perform operation on this list
     let list_name = cli.list.unwrap_or(config.general_list().clone());
     let list_path = config.list_path(&list_name);
 
-    match cli.command {
+    match command {
         Commands::Add { title } => {
             let mut list = match TodoList::from_file(&list_path) {
                 Ok(list) => list,
