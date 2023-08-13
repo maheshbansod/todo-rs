@@ -1,4 +1,4 @@
-use std::{fmt::{Display, Debug}, str::FromStr};
+use std::{fmt::{Display, Debug}, str::FromStr, path::Path, fs, io};
 
 use thiserror::Error;
 
@@ -19,6 +19,24 @@ impl TodoList {
                 .join("\n")
         )
     }
+
+    pub fn as_markdown(&self) -> String {
+        self.list.iter().map(|i| format!("- [{}] {}", i.state.as_markdown(), i.name)).collect::<Vec<String>>().join("\n")
+    }
+
+    pub fn get_item_mut(&mut self, item_number: usize) -> Result<&mut TodoItem, TodoError> {
+        self.list.get_mut(item_number - 1).ok_or_else(|| TodoError::InvalidItemNumber)
+    }
+
+    pub fn mark_item_done(&mut self, item_number: usize) -> Result<&TodoItem, TodoError> {
+        let item = self.get_item_mut(item_number)?;
+        item.mark_done();
+        Ok(item)
+    }
+
+    pub fn write(&self, path: &Path) -> Result<(), TodoError> {
+        Ok(fs::write(path, self.as_markdown())?)
+    }
 }
 
 #[derive(PartialEq, Clone)]
@@ -27,11 +45,26 @@ pub enum TodoItemState {
     Initial,
 }
 
+impl TodoItemState {
+    pub fn as_markdown(&self) -> String {
+        match self {
+            TodoItemState::Done => "x".to_string(),
+            TodoItemState::Initial => " ".to_string()
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct TodoItem {
     pub name: String,
     pub description: Option<String>,
     pub state: TodoItemState,
+}
+
+impl TodoItem {
+    pub fn mark_done(&mut self) {
+        self.state = TodoItemState::Done;
+    }
 }
 
 impl Display for TodoList {
@@ -164,4 +197,8 @@ impl FromStr for TodoItemState {
 pub enum TodoError {
     #[error("Parsing error. {0}")]
     ParseError(String),
+    #[error("Invalid item number. This item doesn't exist in the list")]
+    InvalidItemNumber,
+    #[error("Error writing. {0}")]
+    FileWriteError (#[from] io::Error)
 }
