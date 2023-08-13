@@ -1,7 +1,6 @@
 use std::{
     fmt::{Debug, Display},
-    fs::{self},
-    io,
+    fs, io,
     path::Path,
     str::FromStr,
 };
@@ -75,6 +74,12 @@ impl TodoList {
     pub fn mark_item_done(&mut self, item_number: usize) -> Result<&TodoItem, TodoError> {
         let item = self.get_item_mut(item_number)?;
         item.mark_done();
+        Ok(item)
+    }
+
+    pub fn delete_item(&mut self, item_number: usize) -> Result<TodoItem, TodoError> {
+        let item = self.get_item_mut(item_number)?.clone();
+        self.list.remove(item_number - 1);
         Ok(item)
     }
 

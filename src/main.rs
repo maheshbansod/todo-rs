@@ -33,6 +33,11 @@ enum Commands {
         #[arg(short, long)]
         item_number: usize,
     },
+    /// delete an item
+    Delete {
+        #[arg(short, long)]
+        item_number: usize,
+    },
 }
 
 fn main() -> Result<()> {
@@ -86,6 +91,15 @@ fn main() -> Result<()> {
                 .with_context(|| "Something went wrong. Couldn't write to the list.")?;
 
             println!("Marked item done.\n{item}");
+        }
+        Commands::Delete { item_number } => {
+            let mut list = TodoList::from_file(&list_path)?;
+            let item = list.delete_item(item_number)?;
+
+            list.write(&list_path)
+                .with_context(|| "Couldn't write to the list")?;
+
+            println!("Deleted todo item\n{item}");
         }
     }
     Ok(())
