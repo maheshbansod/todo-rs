@@ -55,7 +55,8 @@ impl TodoList {
     }
 
     pub fn display_with_numbers<P>(&self, predicate: P) -> String
-    where P: FnMut(&(usize, &TodoItem)) -> bool
+    where
+        P: FnMut(&(usize, &TodoItem)) -> bool,
     {
         self.list
             .iter()
@@ -147,7 +148,7 @@ impl TodoItem {
     pub fn mark_done(&mut self) {
         self.state = TodoItemState::Done;
     }
-    
+
     pub fn is_done(&self) -> bool {
         self.state == TodoItemState::Done
     }

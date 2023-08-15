@@ -25,32 +25,30 @@ struct Cli {
 #[derive(Subcommand, Debug)]
 enum Commands {
     /// Add an item
-    #[command(alias="a")]
-    Add {
-        title: String,
-    },
+    #[command(alias = "a")]
+    Add { title: String },
     /// List items
-    #[command(alias="ls")]
+    #[command(alias = "ls")]
     List {
         #[arg(short, long)]
-        all: bool
+        all: bool,
     },
     /// Mark items done
-    #[command(alias="d")]
+    #[command(alias = "d")]
     Done {
         /// Item numbers to mark
         #[arg(short, long, num_args(1..))]
         item_numbers: Vec<usize>,
     },
     /// Delete items
-    #[command(alias="rm")]
+    #[command(alias = "rm")]
     Delete {
         /// Item numbers to delete
         #[arg(short, long, num_args(1..))]
         item_numbers: Vec<usize>,
     },
     /// move items to another list
-    #[command(alias="mv")]
+    #[command(alias = "mv")]
     Move {
         /// Item numbers to move
         #[arg(short, long, num_args(1..))]
@@ -98,9 +96,10 @@ fn main() -> Result<()> {
         }
         Commands::List { all } => {
             let list = TodoList::from_file(&list_path)?;
-            println!("{}", list.display_with_numbers(|&(_, i)| {
-                all || !i.is_done()
-            }));
+            println!(
+                "{}",
+                list.display_with_numbers(|&(_, i)| { all || !i.is_done() })
+            );
         }
         Commands::Done { item_numbers } => {
             let done_items = {
