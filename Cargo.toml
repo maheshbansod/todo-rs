@@ -1,6 +1,6 @@
 [package]
 name = "todo"
-author = "Mahesh Bansod<mahesh0bansod@gmail.com>"
+authors = [ "Mahesh Bansod<mahesh0bansod@gmail.com>" ]
 version = "0.1.0"
 edition = "2021"
 
