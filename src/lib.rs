@@ -109,7 +109,7 @@ impl TodoList {
             .collect::<Result<Vec<_>, _>>()?;
         // this implementation will remove items with the same name - is a fix to this needed?
         self.list
-            .retain(|i| items_to_remove.iter().find(|r| r.name == i.name).is_none());
+            .retain(|i| !items_to_remove.iter().any(|r| r.name == i.name));
         Ok(items_to_remove)
     }
 

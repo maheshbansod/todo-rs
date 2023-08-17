@@ -42,7 +42,7 @@ enum Commands {
     },
     /// Delete items
     #[command(alias = "rm")]
-    Delete {
+    Remove {
         /// Item numbers to delete
         #[arg(short, long, num_args(1..))]
         item_numbers: Vec<usize>,
@@ -122,7 +122,7 @@ fn main() -> Result<()> {
                     .join("\n")
             );
         }
-        Commands::Delete { item_numbers } => {
+        Commands::Remove { item_numbers } => {
             let mut list = TodoList::from_file(&list_path)?;
             let removed_items = list.delete_items(item_numbers)?;
 
