@@ -97,4 +97,14 @@ impl Config {
         list_path.push(format!("{}.md", name));
         list_path
     }
+
+    /// Lists existing lists
+    pub fn existing_lists(&self) -> Result<Vec<String>> {
+        let mut results = vec![];
+        for entry in fs::read_dir(self.main_dir())? {
+            let entry = entry?;
+            results.push(entry.file_name().to_string_lossy().to_string());
+        }
+        Ok(results)
+    }
 }

@@ -33,6 +33,8 @@ enum Commands {
         #[arg(short, long)]
         all: bool,
     },
+    /// List lists
+    Lists,
     /// Mark items done
     #[command(alias = "d")]
     Done {
@@ -100,6 +102,10 @@ fn main() -> Result<()> {
                 "{}",
                 list.display_with_numbers(|&(_, i)| { all || !i.is_done() })
             );
+        }
+        Commands::Lists => {
+            let lists = config.existing_lists()?;
+            println!("{}", lists.join("\n"))
         }
         Commands::Done { item_numbers } => {
             let done_items = {
