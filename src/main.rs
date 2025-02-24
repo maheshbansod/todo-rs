@@ -37,14 +37,14 @@ enum Commands {
     #[command(alias = "d")]
     Done {
         /// Item numbers to mark
-        #[arg(short, long, num_args(1..))]
+        #[arg(short, long, required=true, num_args(1..))]
         item_numbers: Vec<usize>,
     },
     /// Delete items
     #[command(alias = "rm")]
     Remove {
         /// Item numbers to delete
-        #[arg(short, long, num_args(1..))]
+        #[arg(short, long, required=true, num_args(1..))]
         item_numbers: Vec<usize>,
     },
     /// move items to another list
@@ -113,14 +113,11 @@ fn main() -> Result<()> {
                 done_items
             };
 
-            println!(
-                "Marked item(s) done.\n{}",
-                done_items
-                    .iter()
-                    .map(|i| i.to_string())
-                    .collect::<Vec<String>>()
-                    .join("\n")
-            );
+            let done_items = done_items
+                .iter()
+                .map(|i| i.to_string())
+                .collect::<Vec<String>>();
+            println!("Marked item(s) done.\n{}", done_items.join("\n"));
         }
         Commands::Remove { item_numbers } => {
             let mut list = TodoList::from_file(&list_path)?;
