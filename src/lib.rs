@@ -5,6 +5,7 @@ use std::{
     str::FromStr,
 };
 
+use owo_colors::{colors, OwoColorize};
 use thiserror::Error;
 
 pub struct TodoList {
@@ -168,15 +169,54 @@ impl Display for TodoList {
     }
 }
 
+fn render_tag(s: &str) -> String {
+    format!(" #{} ", s)
+        .bg::<colors::Yellow>()
+        .fg::<colors::Black>()
+        .to_string()
+}
+
+/// Looks for words that start with # and colors them differently - maybe i will make this
+/// configurable
+fn color_tags(s: &str) -> String {
+    let mut split = s.split("#");
+    let first = split.next().expect("one elem should be present");
+    let rest = split
+        .map(|s| {
+            if s.starts_with(|c: char| c.is_whitespace()) {
+                s.to_string()
+            } else {
+                if let Some((first_word, rest)) = s.split_once(|c: char| c.is_whitespace()) {
+                    // todo: seems i'm converting any first whitespace to space character -> it should probably
+                    // preserve whitespace
+                    let first_word = render_tag(first_word);
+                    format!("{} {}", first_word, rest)
+                } else {
+                    format!("{}", render_tag(s))
+                }
+            }
+        })
+        .collect::<String>();
+    if rest.is_empty() {
+        format!("{first}")
+    } else {
+        format!("{first}{rest}")
+    }
+}
+
 impl Display for TodoItem {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
             " {} {}{}",
             self.state,
-            self.name,
+            if self.is_done() {
+                format!("{}", color_tags(&self.name).strikethrough())
+            } else {
+                format!("{}", color_tags(&self.name))
+            },
             if let Some(desc) = &self.description {
-                format!("\n{desc}")
+                format!("\n{}", color_tags(desc))
             } else {
                 "".to_string()
             }
@@ -187,8 +227,8 @@ impl Display for TodoItem {
 impl Display for TodoItemState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            TodoItemState::Done => write!(f, "✅"),
-            TodoItemState::Initial => write!(f, "⬜"),
+            TodoItemState::Done => write!(f, "{}", "✅".green()),
+            TodoItemState::Initial => write!(f, "{}", "⬜".yellow()),
         }
     }
 }
