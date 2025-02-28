@@ -82,11 +82,11 @@ fn main() -> Result<()> {
     let command = cli.command.unwrap_or(Commands::List { all: false });
 
     // perform operation on this list
-    let list_name = cli.list.unwrap_or(config.general_list().clone());
-    let list_path = config.list_path(&list_name);
 
     match command {
         Commands::Add { title } => {
+            let list_name = cli.list.unwrap_or_else(|| config.general_list().clone());
+            let list_path = config.list_path(&list_name);
             let mut list = match TodoList::from_file(&list_path) {
                 Ok(list) => list,
                 Err(TodoError::FileIOError(_)) => TodoList::new(&list_name),
@@ -97,6 +97,8 @@ fn main() -> Result<()> {
                 .with_context(|| "Couldn't write the list")?;
         }
         Commands::List { all } => {
+            let list_name = cli.list.unwrap_or_else(|| config.general_list().clone());
+            let list_path = config.list_path(&list_name);
             let list = TodoList::from_file(&list_path)?;
             println!(
                 "{}",
@@ -108,6 +110,8 @@ fn main() -> Result<()> {
             println!("{}", lists.join("\n"))
         }
         Commands::Done { item_numbers } => {
+            let list_name = cli.list.unwrap_or_else(|| config.general_list().clone());
+            let list_path = config.list_path(&list_name);
             let done_items = {
                 let mut list = TodoList::from_file(&list_path)?;
                 let done_items = item_numbers
@@ -126,6 +130,8 @@ fn main() -> Result<()> {
             println!("Marked item(s) done.\n{}", done_items.join("\n"));
         }
         Commands::Remove { item_numbers } => {
+            let list_name = cli.list.unwrap_or_else(|| config.general_list().clone());
+            let list_path = config.list_path(&list_name);
             let mut list = TodoList::from_file(&list_path)?;
             let removed_items = list.delete_items(item_numbers)?;
 
@@ -145,6 +151,8 @@ fn main() -> Result<()> {
             item_numbers,
             to_list,
         } => {
+            let list_name = cli.list.unwrap_or_else(|| config.general_list().clone());
+            let list_path = config.list_path(&list_name);
             let mut from_list = TodoList::from_file(&list_path)?;
             let to_list_path = config.list_path(&to_list);
             let mut to_list = TodoList::from_file(&to_list_path)?;
