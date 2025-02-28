@@ -1,4 +1,5 @@
 use std::{
+    fmt::Display,
     fs, io,
     path::{Path, PathBuf},
 };
@@ -7,11 +8,21 @@ use anyhow::{Context, Result};
 use getset::Getters;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Getters, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ListMetadata {
+    name: String,
+    path: PathBuf,
+}
+
+#[derive(Clone, Debug, Getters, Serialize, Deserialize)]
 pub struct Config {
     /// all lists live in the main dir
     #[getset(get)]
     main_dir: PathBuf,
+    #[getset(get)]
+    /// Custom lists from around the OS
+    #[serde(default = "Config::default_lists")]
+    lists: Vec<ListMetadata>,
     /// general list - random items with no list specified will be in this list
     #[serde(default = "Config::default_general_list_name")]
     #[getset(get = "pub")]
@@ -52,6 +63,9 @@ impl Config {
         serde_json::from_str(&config_file).context("Invalid config file")
     }
 
+    fn default_lists() -> Vec<ListMetadata> {
+        vec![]
+    }
     fn default_general_list_name() -> String {
         "general".to_string()
     }
@@ -93,18 +107,73 @@ impl Config {
     }
 
     pub fn list_path(&self, name: &str) -> PathBuf {
-        let mut list_path = self.main_dir.clone();
-        list_path.push(format!("{}.md", name));
-        list_path
+        if let Some(l) = self.lists.iter().find(|i| i.name == name) {
+            l.path.clone()
+        } else {
+            let mut list_path = self.main_dir.clone();
+            list_path.push(format!("{}.md", name));
+            list_path
+        }
     }
 
     /// Lists existing lists
     pub fn existing_lists(&self) -> Result<Vec<String>> {
         let mut results = vec![];
+        for l in self.lists.iter() {
+            results.push(l.name.clone());
+        }
         for entry in fs::read_dir(self.main_dir())? {
             let entry = entry?;
             results.push(entry.file_name().to_string_lossy().to_string());
         }
         Ok(results)
+    }
+
+    pub fn existing_lists_meta(&self) -> Result<Vec<ListMetadata>> {
+        let mut results = vec![];
+        for l in self.lists.iter() {
+            results.push(l.clone());
+        }
+        for entry in fs::read_dir(self.main_dir())? {
+            let entry = entry?;
+            let list_name = entry.file_name().to_string_lossy().to_string();
+            let list_name = &list_name[..list_name.len() - 3];
+            results.push(ListMetadata {
+                name: list_name.to_string(),
+                path: PathBuf::from(format!(
+                    "{}/{}.md",
+                    self.main_dir().to_string_lossy().to_string(),
+                    list_name
+                )),
+            });
+        }
+        Ok(results)
+    }
+
+    pub fn outside_list_exists(&self, list_name: &str) -> bool {
+        self.lists.iter().any(|i| i.name == list_name)
+    }
+
+    /// Add a list
+    pub fn add_list(&self, list_name: &str, list_path: &PathBuf) -> Result<()> {
+        let mut c = self.clone();
+        c.lists.push(ListMetadata {
+            name: list_name.to_string(),
+            path: PathBuf::from(&list_path),
+        });
+        let config_dir = Config::default_config_path();
+        fs::write(config_dir, serde_json::to_string_pretty(&c)?)?;
+        Ok(())
+    }
+}
+
+impl Display for ListMetadata {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}: {}",
+            self.name,
+            self.path.to_string_lossy().to_string()
+        )
     }
 }

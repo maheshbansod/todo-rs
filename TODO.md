@@ -1,0 +1,32 @@
+- [x] add ability to move a todo item from general to another list or any list to any other list
+- [x] fix: new list creation
+- [x] ability to remove a todo item by number for todo app
+- [x] support multiple lists for todo app
+- [x] ability to mark todo item correct for todo app
+- [x] todo list command should only show not done items
+- [x] allow setting multiple items as done
+- [x] dont allow removing 0 items or marking 0 items as done
+- [ ] add summary command to list a summary of existing list and some undone tasks
+- [x] write readme.md for todo-rs
+- [ ] ability add tags to each todo item
+- [ ] a way to set time to finish
+- [ ] think about what to do to avoid too big numbers - pagination/list splitting/moving dones
+- [ ] think about tags/priority from an obsidian point of view too
+- [ ] think about how to remotely share todos / other configs - should it be todo apps responsibility?
+- [ ] optionally tag tasks with effort required, and deadline
+- [ ] get rid of println maybe and directly use stdout
+- [ ] add todos via stdin
+- [ ] ability to list existing lists
+- [ ] show some kind of summary as well in the command with no subcommands
+- [ ] get random task
+- [ ] auto-complete list
+- [ ] get list to use from env variable
+- [ ] ability to show current config
+- [ ] ability to show config path and lists path
+- [ ] default list can be set from current directory TODO.md
+- [ ] let's parse todo items more relaxed so that more formats of todo.md can be supported maybe
+- [x] beautiful tags with octothorpe
+- [ ] allow changing colors and stuff maybe
+- [ ] easy way to refer to previously accessed list
+- [ ] edit and done for cases where i wanna archive a todo without completing it
+- [ ] more deterministic numbers

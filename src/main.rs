@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{env, fs, path::PathBuf};
 
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
@@ -34,7 +34,10 @@ enum Commands {
         all: bool,
     },
     /// List lists
-    Lists,
+    Lists {
+        #[arg(short, long)]
+        show_paths: bool,
+    },
     /// Mark items done
     #[command(alias = "d")]
     Done {
@@ -97,7 +100,31 @@ fn main() -> Result<()> {
                 .with_context(|| "Couldn't write the list")?;
         }
         Commands::List { all } => {
-            let list_name = cli.list.unwrap_or_else(|| config.general_list().clone());
+            let list_name = if let Some(list_name) = cli.list {
+                list_name
+            } else {
+                // check current directory contains TODO.md
+                if let Ok(true) = fs::exists("./TODO.md") {
+                    // if yes, let's save it and return that
+                    let cwd = env::current_dir()?;
+                    let list_name = cwd
+                        .file_name()
+                        .expect("i expect folder name to exist i guess")
+                        .to_string_lossy()
+                        .to_string();
+                    if config.outside_list_exists(&list_name) {
+                        list_name
+                    } else {
+                        let list_path = cwd.join("TODO.md");
+
+                        config.add_list(&list_name, &list_path)?;
+                        list_name
+                    }
+                } else {
+                    // else let's return the default
+                    config.general_list().clone()
+                }
+            };
             let list_path = config.list_path(&list_name);
             let list = TodoList::from_file(&list_path)?;
             println!(
@@ -105,9 +132,17 @@ fn main() -> Result<()> {
                 list.display_with_numbers(|&(_, i)| { all || !i.is_done() })
             );
         }
-        Commands::Lists => {
-            let lists = config.existing_lists()?;
-            println!("{}", lists.join("\n"))
+        Commands::Lists { show_paths } => {
+            if show_paths {
+                let lists = config.existing_lists_meta()?;
+                for list in lists {
+                    // todo: maybe we should show it in table form?
+                    println!("{list}")
+                }
+            } else {
+                let lists = config.existing_lists()?;
+                println!("{}", lists.join("\n"))
+            }
         }
         Commands::Done { item_numbers } => {
             let list_name = cli.list.unwrap_or_else(|| config.general_list().clone());
