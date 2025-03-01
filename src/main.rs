@@ -88,7 +88,11 @@ fn main() -> Result<()> {
 
     match command {
         Commands::Add { title } => {
-            let list_name = cli.list.unwrap_or_else(|| config.general_list().clone());
+            let list_name = if let Some(list_name) = cli.list {
+                list_name
+            } else {
+                get_list_name(&config)?
+            };
             let list_path = config.list_path(&list_name);
             let mut list = match TodoList::from_file(&list_path) {
                 Ok(list) => list,
@@ -103,27 +107,7 @@ fn main() -> Result<()> {
             let list_name = if let Some(list_name) = cli.list {
                 list_name
             } else {
-                // check current directory contains TODO.md
-                if let Ok(true) = fs::exists("./TODO.md") {
-                    // if yes, let's save it and return that
-                    let cwd = env::current_dir()?;
-                    let list_name = cwd
-                        .file_name()
-                        .expect("i expect folder name to exist i guess")
-                        .to_string_lossy()
-                        .to_string();
-                    if config.outside_list_exists(&list_name) {
-                        list_name
-                    } else {
-                        let list_path = cwd.join("TODO.md");
-
-                        config.add_list(&list_name, &list_path)?;
-                        list_name
-                    }
-                } else {
-                    // else let's return the default
-                    config.general_list().clone()
-                }
+                get_list_name(&config)?
             };
             let list_path = config.list_path(&list_name);
             let list = TodoList::from_file(&list_path)?;
@@ -145,7 +129,11 @@ fn main() -> Result<()> {
             }
         }
         Commands::Done { item_numbers } => {
-            let list_name = cli.list.unwrap_or_else(|| config.general_list().clone());
+            let list_name = if let Some(list_name) = cli.list {
+                list_name
+            } else {
+                get_list_name(&config)?
+            };
             let list_path = config.list_path(&list_name);
             let done_items = {
                 let mut list = TodoList::from_file(&list_path)?;
@@ -165,7 +153,11 @@ fn main() -> Result<()> {
             println!("Marked item(s) done.\n{}", done_items.join("\n"));
         }
         Commands::Remove { item_numbers } => {
-            let list_name = cli.list.unwrap_or_else(|| config.general_list().clone());
+            let list_name = if let Some(list_name) = cli.list {
+                list_name
+            } else {
+                get_list_name(&config)?
+            };
             let list_path = config.list_path(&list_name);
             let mut list = TodoList::from_file(&list_path)?;
             let removed_items = list.delete_items(item_numbers)?;
@@ -186,7 +178,11 @@ fn main() -> Result<()> {
             item_numbers,
             to_list,
         } => {
-            let list_name = cli.list.unwrap_or_else(|| config.general_list().clone());
+            let list_name = if let Some(list_name) = cli.list {
+                list_name
+            } else {
+                get_list_name(&config)?
+            };
             let list_path = config.list_path(&list_name);
             let mut from_list = TodoList::from_file(&list_path)?;
             let to_list_path = config.list_path(&to_list);
@@ -201,4 +197,28 @@ fn main() -> Result<()> {
         }
     }
     Ok(())
+}
+
+fn get_list_name(config: &Config) -> Result<String> {
+    // check current directory contains TODO.md
+    if let Ok(true) = fs::exists("./TODO.md") {
+        // if yes, let's save it and return that
+        let cwd = env::current_dir()?;
+        let list_name = cwd
+            .file_name()
+            .expect("i expect folder name to exist i guess")
+            .to_string_lossy()
+            .to_string();
+        if config.outside_list_exists(&list_name) {
+            Ok(list_name)
+        } else {
+            let list_path = cwd.join("TODO.md");
+
+            config.add_list(&list_name, &list_path)?;
+            Ok(list_name)
+        }
+    } else {
+        // else let's return the default
+        Ok(config.general_list().clone())
+    }
 }
