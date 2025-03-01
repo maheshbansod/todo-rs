@@ -30,3 +30,4 @@
 - [ ] easy way to refer to previously accessed list
 - [ ] edit and done for cases where i wanna archive a todo without completing it
 - [ ] more deterministic numbers
+- [ ] document all subcommands and their aliases and tags and everything
