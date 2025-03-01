@@ -1,12 +1,15 @@
 use std::{
     fmt::Display,
-    fs, io,
+    fs,
     path::{Path, PathBuf},
 };
 
 use anyhow::{Context, Result};
 use getset::Getters;
+use owo_colors::OwoColorize;
 use serde::{Deserialize, Serialize};
+
+const APP_NAME: &str = env!("CARGO_PKG_NAME");
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ListMetadata {
@@ -50,9 +53,14 @@ impl Config {
     }
 
     fn default_config_dir_path() -> PathBuf {
-        const APP_NAME: &str = env!("CARGO_PKG_NAME");
         dirs::config_dir()
             .expect("OS config directory not found")
+            .join(APP_NAME)
+    }
+
+    fn default_list_directory_path() -> PathBuf {
+        dirs::data_dir()
+            .expect("OS shared data directory not found")
             .join(APP_NAME)
     }
 
@@ -70,17 +78,24 @@ impl Config {
         "general".to_string()
     }
 
-    /// Prompts the user for the config
-    pub fn read_interactive() -> Result<Self> {
-        let main_dir = Config::prompt("Where should the todo lists be located?", None)?;
-        let general_list = Config::prompt(
-            "What should the general list be called?",
-            Some(Config::default_general_list_name().as_str()),
-        )?;
+    /// Write's the config with all the default settings
+    /// And prints information about it.
+    pub fn write_default() -> Result<Self> {
+        println!("Welcome to {} by @maheshbansod!", "todo".green());
+        println!();
+        println!(
+            "Setting some defaults to your config at {:?}",
+            Config::default_config_path()
+        );
+        let main_dir = Config::default_list_directory_path();
+        println!("Setting the main_dir to {:?}. This is where any new lists you manually make will be stored.", main_dir);
+        let general_list = Config::default_general_list_name();
+        println!();
+        println!("Setting the general list name to {}. This is like a default list. This list will be used for commands when there's no list in the current directory and no list is manually specified.", general_list);
 
         let optconfig = OptionalConfig {
             main_dir: PathBuf::from(main_dir),
-            general_list: (!general_list.is_empty()).then_some(general_list),
+            general_list: (!general_list.is_empty()).then_some(general_list.to_string()),
         };
 
         // write to the default config path
@@ -89,21 +104,11 @@ impl Config {
         let config_path = Config::default_config_path();
         fs::write(config_path, serde_json::to_string_pretty(&optconfig)?)?;
 
+        println!();
+        println!("All done!");
+        println!();
         // re-read default and return it
         Config::read_from_default()
-    }
-
-    fn prompt(prompt: &str, default: Option<&str>) -> Result<String> {
-        println!("> {}", prompt);
-        if let Some(default) = default {
-            println!("(default: {default})");
-        }
-        let mut data = String::new();
-        let stdin = io::stdin();
-        stdin
-            .read_line(&mut data)
-            .context("Failed to read user input")?;
-        Ok(data.trim().to_owned())
     }
 
     pub fn list_path(&self, name: &str) -> PathBuf {
@@ -155,25 +160,20 @@ impl Config {
     }
 
     /// Add a list
-    pub fn add_list(&self, list_name: &str, list_path: &PathBuf) -> Result<()> {
-        let mut c = self.clone();
-        c.lists.push(ListMetadata {
+    pub fn add_list(&mut self, list_name: &str, list_path: &PathBuf) -> Result<()> {
+        // let mut c = self.clone();
+        self.lists.push(ListMetadata {
             name: list_name.to_string(),
             path: PathBuf::from(&list_path),
         });
         let config_dir = Config::default_config_path();
-        fs::write(config_dir, serde_json::to_string_pretty(&c)?)?;
+        fs::write(config_dir, serde_json::to_string_pretty(&self)?)?;
         Ok(())
     }
 }
 
 impl Display for ListMetadata {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}: {}",
-            self.name,
-            self.path.to_string_lossy()
-        )
+        write!(f, "{}: {}", self.name, self.path.to_string_lossy())
     }
 }

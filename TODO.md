@@ -31,3 +31,6 @@
 - [ ] edit and done for cases where i wanna archive a todo without completing it
 - [ ] more deterministic numbers
 - [ ] document all subcommands and their aliases and tags and everything
+- [ ] ability to rename local lists
+- [ ] get config path from env
+- [ ] ability to add arbitrary local list -> why not just add it by modifying config manually?

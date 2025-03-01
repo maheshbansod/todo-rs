@@ -67,18 +67,14 @@ enum Commands {
 fn main() -> Result<()> {
     let cli = Cli::parse();
 
-    let config = if let Some(config_path) = cli.config {
+    let mut config = if let Some(config_path) = cli.config {
         Config::read_from(&config_path)?
     } else if let Ok(config) = Config::read_from_default() {
         config
     } else {
-        println!(
-            "Looked for the config file at '{}'",
-            Config::default_config_path().display()
-        );
-        println!("It either does not exist or is invalid.");
-        println!("You can stop the application now or you can respond to the following questions to create a new config file.");
-        Config::read_interactive()?
+        // I think instead of interactive mode - let's just use a default and go with that.
+        // and tell the user i'm using the default thing. so they can modify it if they want.
+        Config::write_default()?
     };
 
     // list is the default command
@@ -91,7 +87,7 @@ fn main() -> Result<()> {
             let list_name = if let Some(list_name) = cli.list {
                 list_name
             } else {
-                get_list_name(&config)?
+                get_list_name(&mut config)?
             };
             let list_path = config.list_path(&list_name);
             let mut list = match TodoList::from_file(&list_path) {
@@ -107,7 +103,7 @@ fn main() -> Result<()> {
             let list_name = if let Some(list_name) = cli.list {
                 list_name
             } else {
-                get_list_name(&config)?
+                get_list_name(&mut config)?
             };
             let list_path = config.list_path(&list_name);
             let list = TodoList::from_file(&list_path)?;
@@ -132,7 +128,7 @@ fn main() -> Result<()> {
             let list_name = if let Some(list_name) = cli.list {
                 list_name
             } else {
-                get_list_name(&config)?
+                get_list_name(&mut config)?
             };
             let list_path = config.list_path(&list_name);
             let done_items = {
@@ -156,7 +152,7 @@ fn main() -> Result<()> {
             let list_name = if let Some(list_name) = cli.list {
                 list_name
             } else {
-                get_list_name(&config)?
+                get_list_name(&mut config)?
             };
             let list_path = config.list_path(&list_name);
             let mut list = TodoList::from_file(&list_path)?;
@@ -181,7 +177,7 @@ fn main() -> Result<()> {
             let list_name = if let Some(list_name) = cli.list {
                 list_name
             } else {
-                get_list_name(&config)?
+                get_list_name(&mut config)?
             };
             let list_path = config.list_path(&list_name);
             let mut from_list = TodoList::from_file(&list_path)?;
@@ -199,7 +195,11 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn get_list_name(config: &Config) -> Result<String> {
+/// Get's the list name that we need to work on
+/// If the current location contains a TODO.md that's used
+///     if it's not saved then we save it in the config too
+/// if nothing in the current location then we check from our config
+fn get_list_name(config: &mut Config) -> Result<String> {
     // check current directory contains TODO.md
     if let Ok(true) = fs::exists("./TODO.md") {
         // if yes, let's save it and return that
