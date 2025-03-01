@@ -16,15 +16,15 @@
 - [ ] optionally tag tasks with effort required, and deadline
 - [ ] get rid of println maybe and directly use stdout
 - [ ] add todos via stdin
-- [ ] ability to list existing lists
+- [x] ability to list existing lists
 - [ ] show some kind of summary as well in the command with no subcommands
 - [ ] get random task
 - [ ] auto-complete list
 - [ ] get list to use from env variable
 - [ ] ability to show current config
 - [ ] ability to show config path and lists path
-- [ ] default list can be set from current directory TODO.md
-- [ ] let's parse todo items more relaxed so that more formats of todo.md can be supported maybe
+- [x] default list can be set from current directory TODO.md
+- [x] let's parse todo items more relaxed so that more formats of todo.md can be supported maybe
 - [x] beautiful tags with octothorpe
 - [ ] allow changing colors and stuff maybe
 - [ ] easy way to refer to previously accessed list
