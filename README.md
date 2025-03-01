@@ -30,14 +30,35 @@ todo mv --item-numbers 2 --to-list "projectx"
 todo lists
 ```
 
+### Sample workflow
+
 I have aliased it to `t` simply and most subcommands have an alias, so to add an item it's just
 ```
 t a "replace moment with datefns #chore"
 ```
+List down all incomplete tasks:
+```
+t
+```
+Mark a few tasks as done:
+```
+t d -i 12 54
+```
+List all the lists tracked by `todo` so far along with the location of the list:
+```
+t lists --show-paths
+```
+List all tasks including done tasks for a specific list
+```
+t -l mylist ls --all
+```
+
 
 ## Configuration
 
-`todo`'s configuration is in `~/.config/todo/config.json`. Customize `main_dir`, `general_list`, and custom `lists`. Configure interactively by running without a config file.
+`todo`'s configuration is in `~/.config/todo/config.json`. Customize `main_dir`, `general_list`, and custom `lists`.
+
+Running it for the first time will auto-generate your config with defaults.
 
 ## Contributing
 
