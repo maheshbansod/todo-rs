@@ -142,7 +142,7 @@ impl Config {
                 name: list_name.to_string(),
                 path: PathBuf::from(format!(
                     "{}/{}.md",
-                    self.main_dir().to_string_lossy().to_string(),
+                    self.main_dir().to_string_lossy(),
                     list_name
                 )),
             });
@@ -173,7 +173,7 @@ impl Display for ListMetadata {
             f,
             "{}: {}",
             self.name,
-            self.path.to_string_lossy().to_string()
+            self.path.to_string_lossy()
         )
     }
 }

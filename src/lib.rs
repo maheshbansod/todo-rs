@@ -38,10 +38,10 @@ impl TodoList {
         for line in lines {
             if line.starts_with("- [") {
                 let item: Result<TodoItem, _> = line.parse();
-                if let Err(_) = item {
-                    list.push(TodoListFileItem::String(line.to_string()));
+                if let Ok(item) = item {
+                    list.push(TodoListFileItem::TodoItem(item));
                 } else {
-                    list.push(TodoListFileItem::TodoItem(item.unwrap()));
+                    list.push(TodoListFileItem::String(line.to_string()));
                 }
             } else {
                 list.push(TodoListFileItem::String(line.to_string()));
@@ -59,7 +59,7 @@ impl TodoList {
             .enumerate()
             .filter(|(i, list_file_item)| {
                 if let TodoListFileItem::TodoItem(todo_item) = list_file_item {
-                    let a = (i.clone(), todo_item);
+                    let a = (*i, todo_item);
                     predicate(&a)
                 } else {
                     true
@@ -90,7 +90,7 @@ impl TodoList {
     pub fn get_item_mut(&mut self, item_number: usize) -> Result<&mut TodoItem, TodoError> {
         self.list
             .get_mut(item_number - 1)
-            .ok_or_else(|| TodoError::InvalidItemNumber(item_number))
+            .ok_or(TodoError::InvalidItemNumber(item_number))
             .and_then(|item| {
                 if let TodoListFileItem::TodoItem(todo_item) = item {
                     Ok(todo_item)
@@ -102,7 +102,7 @@ impl TodoList {
     pub fn get_item(&self, item_number: usize) -> Result<&TodoItem, TodoError> {
         self.list
             .get(item_number - 1)
-            .ok_or_else(|| TodoError::InvalidItemNumber(item_number))
+            .ok_or(TodoError::InvalidItemNumber(item_number))
             .and_then(|item| {
                 if let TodoListFileItem::TodoItem(todo_item) = item {
                     Ok(todo_item)
@@ -145,10 +145,8 @@ impl TodoList {
     }
 
     pub fn add_items(&mut self, items: Vec<TodoItem>) {
-        let converted_items: Vec<TodoListFileItem> = items
-            .into_iter()
-            .map(|item| TodoListFileItem::TodoItem(item))
-            .collect();
+        let converted_items: Vec<TodoListFileItem> =
+            items.into_iter().map(TodoListFileItem::TodoItem).collect();
 
         self.list.extend(converted_items);
     }
@@ -228,20 +226,18 @@ fn color_tags(s: &str) -> String {
         .map(|s| {
             if s.starts_with(|c: char| c.is_whitespace()) {
                 s.to_string()
+            } else if let Some((first_word, rest)) = s.split_once(|c: char| c.is_whitespace()) {
+                // todo: seems i'm converting any first whitespace to space character -> it should probably
+                // preserve whitespace
+                let first_word = render_tag(first_word);
+                format!("{} {}", first_word, rest)
             } else {
-                if let Some((first_word, rest)) = s.split_once(|c: char| c.is_whitespace()) {
-                    // todo: seems i'm converting any first whitespace to space character -> it should probably
-                    // preserve whitespace
-                    let first_word = render_tag(first_word);
-                    format!("{} {}", first_word, rest)
-                } else {
-                    format!("{}", render_tag(s))
-                }
+                render_tag(s).to_string()
             }
         })
         .collect::<String>();
     if rest.is_empty() {
-        format!("{first}")
+        first.to_string()
     } else {
         format!("{first}{rest}")
     }
@@ -265,7 +261,7 @@ impl Display for TodoItem {
             if self.is_done() {
                 format!("{}", color_tags(&self.name).strikethrough())
             } else {
-                format!("{}", color_tags(&self.name))
+                color_tags(&self.name).to_string()
             },
             if let Some(desc) = &self.description {
                 format!("\n{}", color_tags(desc))

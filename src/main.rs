@@ -139,7 +139,7 @@ fn main() -> Result<()> {
                 let mut list = TodoList::from_file(&list_path)?;
                 let done_items = item_numbers
                     .iter()
-                    .map(|item_number| list.mark_item_done(*item_number).map(|i| i.clone()))
+                    .map(|item_number| list.mark_item_done(*item_number).cloned())
                     .collect::<Result<Vec<_>, _>>()?;
                 list.write(&config.list_path(&list_name))
                     .with_context(|| "Something went wrong. Couldn't write to the list.")?;
