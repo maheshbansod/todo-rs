@@ -160,7 +160,7 @@ fn main() -> Result<()> {
             };
             let list_path = config.list_path(&list_name);
             let mut list = TodoList::from_file(&list_path)?;
-            let removed_items = list.delete_items(item_numbers)?;
+            let removed_items = list.delete_items(&item_numbers)?;
 
             list.write(&list_path)
                 .with_context(|| "Couldn't write to the list")?;
@@ -187,7 +187,7 @@ fn main() -> Result<()> {
             let mut from_list = TodoList::from_file(&list_path)?;
             let to_list_path = config.list_path(&to_list);
             let mut to_list = TodoList::from_file(&to_list_path)?;
-            let removed_items = from_list.delete_items(item_numbers)?;
+            let removed_items = from_list.delete_items(&item_numbers)?;
             to_list.add_items(removed_items);
 
             to_list.write(&to_list_path).with_context(|| {

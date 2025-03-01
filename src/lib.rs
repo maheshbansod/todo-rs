@@ -10,7 +10,7 @@ use thiserror::Error;
 
 pub struct TodoList {
     pub name: String,
-    list: Vec<TodoItem>,
+    list: Vec<TodoListFileItem>,
 }
 
 impl TodoList {
@@ -31,25 +31,20 @@ impl TodoList {
         })
     }
 
-    fn list_from_str(s: &str) -> Result<Vec<TodoItem>, TodoError> {
+    fn list_from_str(s: &str) -> Result<Vec<TodoListFileItem>, TodoError> {
         // todo: maybe try nom or smn
         let lines = s.lines();
-        let mut list: Vec<TodoItem> = vec![];
+        let mut list: Vec<TodoListFileItem> = vec![];
         for line in lines {
-            let item: Result<TodoItem, _> = line.parse();
-            if let Err(err) = item {
-                // concat to last's desciption if invalid todo item
-                if let Some(last) = list.last_mut() {
-                    if let Some(desc) = &last.description {
-                        last.description = Some(format!("{}\n{}", desc, line));
-                    } else {
-                        last.description = Some(line.to_string());
-                    }
+            if line.starts_with("- [") {
+                let item: Result<TodoItem, _> = line.parse();
+                if let Err(_) = item {
+                    list.push(TodoListFileItem::String(line.to_string()));
                 } else {
-                    return Err(err);
+                    list.push(TodoListFileItem::TodoItem(item.unwrap()));
                 }
             } else {
-                list.push(item.unwrap());
+                list.push(TodoListFileItem::String(line.to_string()));
             }
         }
         Ok(list)
@@ -57,13 +52,23 @@ impl TodoList {
 
     pub fn display_with_numbers<P>(&self, predicate: P) -> String
     where
-        P: FnMut(&(usize, &TodoItem)) -> bool,
+        P: Fn(&(usize, &TodoItem)) -> bool,
     {
         self.list
             .iter()
             .enumerate()
-            .filter(predicate)
-            .map(|(i, item)| format!("{: >3} {item}", i + 1)) // padding will be good till 3
+            .filter(|(i, list_file_item)| {
+                if let TodoListFileItem::TodoItem(todo_item) = list_file_item {
+                    let a = (i.clone(), todo_item);
+                    predicate(&a)
+                } else {
+                    true
+                }
+            })
+            .map(|(i, item)| match item {
+                TodoListFileItem::TodoItem(item) => format!("{: >3} {item}", i + 1),
+                TodoListFileItem::String(s) => s.to_string(),
+            }) // padding will be good till 3
             // digits - todo: check how we can remove this limit
             .collect::<Vec<String>>()
             .join("\n")
@@ -72,7 +77,12 @@ impl TodoList {
     pub fn as_markdown(&self) -> String {
         self.list
             .iter()
-            .map(|i| format!("- [{}] {}", i.state.as_markdown(), i.name))
+            .map(|i| match i {
+                TodoListFileItem::TodoItem(i) => {
+                    format!("- [{}] {}", i.state.as_markdown(), i.name)
+                }
+                TodoListFileItem::String(s) => s.to_string(),
+            })
             .collect::<Vec<String>>()
             .join("\n")
     }
@@ -81,11 +91,25 @@ impl TodoList {
         self.list
             .get_mut(item_number - 1)
             .ok_or_else(|| TodoError::InvalidItemNumber(item_number))
+            .and_then(|item| {
+                if let TodoListFileItem::TodoItem(todo_item) = item {
+                    Ok(todo_item)
+                } else {
+                    Err(TodoError::InvalidItemNumber(item_number))
+                }
+            })
     }
     pub fn get_item(&self, item_number: usize) -> Result<&TodoItem, TodoError> {
         self.list
             .get(item_number - 1)
             .ok_or_else(|| TodoError::InvalidItemNumber(item_number))
+            .and_then(|item| {
+                if let TodoListFileItem::TodoItem(todo_item) = item {
+                    Ok(todo_item)
+                } else {
+                    Err(TodoError::InvalidItemNumber(item_number))
+                }
+            })
     }
 
     pub fn mark_item_done(&mut self, item_number: usize) -> Result<&TodoItem, TodoError> {
@@ -100,22 +124,33 @@ impl TodoList {
             description: None,
             state: TodoItemState::Initial,
         };
-        self.list.push(item);
+        self.list.push(TodoListFileItem::TodoItem(item));
     }
 
-    pub fn delete_items(&mut self, item_numbers: Vec<usize>) -> Result<Vec<TodoItem>, TodoError> {
-        let items_to_remove = item_numbers
-            .iter()
-            .map(|&i| self.get_item(i).cloned())
-            .collect::<Result<Vec<_>, _>>()?;
-        // this implementation will remove items with the same name - is a fix to this needed?
-        self.list
-            .retain(|i| !items_to_remove.iter().any(|r| r.name == i.name));
-        Ok(items_to_remove)
+    pub fn delete_items(&mut self, item_numbers: &[usize]) -> Result<Vec<TodoItem>, TodoError> {
+        let mut sorted_indices = item_numbers.to_vec();
+        sorted_indices.sort_unstable_by(|a, b| b.cmp(a));
+
+        let mut removed = vec![];
+        for &index in &sorted_indices {
+            if index > 0 && index <= self.list.len() {
+                let todo_item = self.get_item(index)?.clone();
+                removed.push(todo_item);
+                self.list.remove(index - 1);
+            } else {
+                return Err(TodoError::InvalidItemNumber(index));
+            }
+        }
+        Ok(removed)
     }
 
-    pub fn add_items(&mut self, mut items: Vec<TodoItem>) {
-        self.list.append(&mut items);
+    pub fn add_items(&mut self, items: Vec<TodoItem>) {
+        let converted_items: Vec<TodoListFileItem> = items
+            .into_iter()
+            .map(|item| TodoListFileItem::TodoItem(item))
+            .collect();
+
+        self.list.extend(converted_items);
     }
 
     pub fn write(&self, path: &Path) -> Result<(), TodoError> {
@@ -136,6 +171,14 @@ impl TodoItemState {
             TodoItemState::Initial => " ".to_string(),
         }
     }
+}
+
+pub enum TodoListFileItem {
+    TodoItem(TodoItem),
+    /// I put anything random as a string in this.
+    /// Probably in the future I will also parse headings separately
+    /// giving the users ability to add an item to a specific heading
+    String(String),
 }
 
 #[derive(Clone)]
@@ -201,6 +244,15 @@ fn color_tags(s: &str) -> String {
         format!("{first}")
     } else {
         format!("{first}{rest}")
+    }
+}
+
+impl Display for TodoListFileItem {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::String(s) => write!(f, "{s}"),
+            Self::TodoItem(t) => write!(f, "{t}"),
+        }
     }
 }
 
