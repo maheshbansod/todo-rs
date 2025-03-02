@@ -89,9 +89,20 @@ impl Config {
         );
         let main_dir = Config::default_list_directory_path();
         println!("Setting the main_dir to {:?}. This is where any new lists you manually make will be stored.", main_dir);
+        fs::create_dir_all(&main_dir).context("Creating main lists directory")?;
         let general_list = Config::default_general_list_name();
         println!();
         println!("Setting the general list name to {}. This is like a default list. This list will be used for commands when there's no list in the current directory and no list is manually specified.", general_list);
+        let general_list_path = main_dir.join(&format!("{general_list}.md"));
+        println!(
+            "Writing a dummy item to your general list: {:?}",
+            general_list_path
+        );
+        fs::write(
+            general_list_path,
+            "- [ ] Your first todo item! You can mark it done with `d` or remove it with `rm`",
+        )
+        .context("Writing the general list")?;
 
         let optconfig = OptionalConfig {
             main_dir: PathBuf::from(main_dir),
@@ -117,6 +128,11 @@ impl Config {
         } else {
             let mut list_path = self.main_dir.clone();
             list_path.push(format!("{}.md", name));
+            // let's create the general list if it doesn't exist already
+            // TODO: move this out of here probably
+            if name == "general" && !fs::exists(&list_path).expect("It seems that I was unable to access the general list. Please check the permissions of your main_dir.") {
+                fs::write(&list_path, "").expect("Couldn't create the general list. Please check your config and that you have the necessary permissions to write to the main_dir.");
+            }
             list_path
         }
     }
