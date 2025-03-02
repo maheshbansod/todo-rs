@@ -40,18 +40,60 @@ List down all incomplete tasks:
 ```
 t
 ```
+it outputs:
+```
+  9  ⬜ add summary command to list a summary of existing list and some undone tasks
+ 11  ⬜ ability add tags to each todo item
+ 12  ⬜ a way to set time to finish
+```
 Mark a few tasks as done:
 ```
-t d -i 12 54
+t d -i 9 11
 ```
+It outputs:
+```
+Marked item(s) done.
+ ✅ add summary command to list a summary of existing list and some undone tasks
+ ✅ ability add tags to each todo item
+```
+
 List all the lists tracked by `todo` so far along with the location of the list:
 ```
 t lists --show-paths
 ```
+It'll output:
+```
+todo: /home/light/projects/todo/TODO.md
+ai.nvim: /home/light/projects/ai.nvim/TODO.md
+general: /home/light/vaults/Main/todos/general.md
+```
 List all tasks including done tasks for a specific list
 ```
-t -l mylist ls --all
+t -l ai.nvim ls --all
 ```
+Outputs:
+```
+#### Chat stuff
+
+ 18  ✅ Chat window for continous chats
+ 19  ⬜ Add context with @<some code symbol>.
+ 20  ⬜ RAG on the current file (if the file is big enough)
+ 21  ⬜ Allow adding current file as context.
+ 22  ⬜ Different colors for AI message and user message maybe.
+ 23  ⬜ Auto scroll down to user prompt when AI response appears probably?
+ 24  ⬜ Stream AI response + autoscroll while streaming.
+    - I want to do this in a non-invasive way
+ 26  ⬜ Apply code block
+    - without context - search in the file where to put the code first.
+    - with context it can directly select what parts of the context to replace.
+
+#### Quick suggestion
+
+ 32  ⬜ Better support for adding to the current line
+    - more context like language / framework / locals / etc
+ 34  ⬜ Highlight generated text for maybe 1 second.
+```
+(output trimmed -> check out [ai.nvim](https://github.com/maheshbansod/ai.nvim), your AI within Neovim!)
 
 
 ## Configuration
