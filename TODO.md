@@ -34,3 +34,4 @@
 - [ ] ability to rename local lists
 - [ ] get config path from env
 - [ ] ability to add arbitrary local list -> why not just add it by modifying config manually?
+- [ ] a command to check all list paths and configuration stuff -> todo doctor
