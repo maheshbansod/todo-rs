@@ -79,7 +79,7 @@ impl TodoList {
             .iter()
             .map(|i| match i {
                 TodoListFileItem::TodoItem(i) => {
-                    format!("- [{}] {}", i.state.as_markdown(), i.name)
+                    format!("- [{}] {}\n", i.state.as_markdown(), i.name)
                 }
                 TodoListFileItem::String(s) => format!("{s}\n"),
             })
