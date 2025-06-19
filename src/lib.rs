@@ -79,12 +79,11 @@ impl TodoList {
             .iter()
             .map(|i| match i {
                 TodoListFileItem::TodoItem(i) => {
-                    format!("- [{}] {}", i.state.as_markdown(), i.name)
+                    format!("- [{}] {}\n", i.state.as_markdown(), i.name)
                 }
-                TodoListFileItem::String(s) => s.to_string(),
+                TodoListFileItem::String(s) => format!("{s}\n"),
             })
-            .collect::<Vec<String>>()
-            .join("\n")
+            .collect::<String>()
     }
 
     pub fn get_item_mut(&mut self, item_number: usize) -> Result<&mut TodoItem, TodoError> {
@@ -352,4 +351,22 @@ pub enum TodoError {
     InvalidItemNumber(usize),
     #[error("IO Error. {0}")]
     FileIOError(#[from] io::Error),
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::Path;
+
+    #[test]
+    fn test_as_markdown_trailing_newline() {
+        let mut todo_list = TodoList::new("Test List");
+        todo_list.add_item("First item");
+        todo_list.add_item("Second item");
+
+        let markdown = todo_list.as_markdown();
+
+        // Check if the markdown ends with a newline
+        assert!(markdown.ends_with('\n'));
+    }
 }
